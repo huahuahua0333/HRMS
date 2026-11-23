@@ -1,0 +1,126 @@
+{% extends 'layout.html' %}
+
+{% block title %}薪资管理 - HRMS{% endblock %}
+{% block page_title %}薪资管理{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <span class="glyphicon glyphicon-yen"></span>
+        </div>
+        <div class="stat-info">
+            <h4>¥{{ total_sum }}</h4>
+            <p>薪资总额</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <span class="glyphicon glyphicon-list"></span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ queryset|length }}</h4>
+            <p>薪资记录</p>
+        </div>
+    </div>
+</div>
+
+<!-- 筛选 -->
+<div class="card">
+    <div class="card-body">
+        <form class="form-inline" method="get" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" name="month" class="form-control" placeholder="月份(2026-01)" value="{{ search_month }}" style="width: 150px;">
+            {% if not request.is_employee %}
+            <select name="employee" class="form-control">
+                <option value="">全部员工</option>
+                {% for emp in employee_list %}
+                <option value="{{ emp.id }}" {% if search_employee == emp.id|stringformat:"i" %}selected{% endif %}>{{ emp.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+            <button type="submit" class="btn-modern btn-modern-default">
+                <span class="glyphicon glyphicon-search"></span> 筛选
+            </button>
+            {% if not request.is_employee %}
+            <a href="/salary/add/" class="btn-modern btn-modern-primary">
+                <span class="glyphicon glyphicon-plus"></span> 新建薪资
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- 薪资列表 -->
+<div class="card">
+    <div class="card-header">
+        <h3>
+            <span class="glyphicon glyphicon-usd"></span>
+            薪资列表
+        </h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table-modern">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>员工</th>
+                <th>月份</th>
+                <th>基本工资</th>
+                <th>奖金</th>
+                <th>扣款</th>
+                <th>实发工资</th>
+                {% if not request.is_employee %}
+                <th>操作</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+            <tr>
+                <td>{{ obj.id }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #FF922B, #F76707); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;">
+                            {{ obj.employee.name|first }}
+                        </div>
+                        <strong>{{ obj.employee.name }}</strong>
+                    </div>
+                </td>
+                <td><span class="badge-modern badge-info">{{ obj.month }}</span></td>
+                <td>¥{{ obj.base }}</td>
+                <td style="color: #37B24D;">+¥{{ obj.bonus }}</td>
+                <td style="color: #FA5252;">-¥{{ obj.deduction }}</td>
+                <td style="font-weight: 700; color: #4F6EF7; font-size: 15px;">¥{{ obj.total }}</td>
+                {% if not request.is_employee %}
+                <td>
+                    <a href="/salary/{{ obj.id }}/edit/" class="btn btn-xs btn-default">
+                        <span class="glyphicon glyphicon-pencil"></span> 编辑
+                    </a>
+                    <a href="/salary/{{ obj.id }}/delete/" class="btn btn-xs btn-danger" onclick="return confirm('确定要删除这条薪资记录吗？')">
+                        <span class="glyphicon glyphicon-trash"></span> 删除
+                    </a>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center; color: #ADB5BD; padding: 40px;">
+                    <span class="glyphicon glyphicon-inbox" style="font-size: 40px; display: block; margin-bottom: 10px;"></span>
+                    暂无薪资数据
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div style="padding: 15px 20px; border-top: 1px solid var(--border); background: #F8F9FA;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 600; color: #495057;">
+                    薪资总额：<span style="color: #4F6EF7; font-size: 18px;">¥{{ total_sum }}</span>
+                </div>
+                <div>{{ page_string|safe }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

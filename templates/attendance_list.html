@@ -1,0 +1,121 @@
+{% extends 'layout.html' %}
+
+{% block title %}考勤管理 - HRMS{% endblock %}
+{% block page_title %}考勤管理{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>
+            <span class="glyphicon glyphicon-check"></span>
+            考勤记录
+        </h3>
+        {% if not request.is_employee %}
+        <a href="/attendance/add/" class="btn-modern btn-modern-success">
+            <span class="glyphicon glyphicon-plus"></span> 新建考勤
+        </a>
+        {% endif %}
+    </div>
+    <!-- 筛选栏 -->
+    <div style="padding: 15px 20px; background: #F8F9FA; border-bottom: 1px solid var(--border);">
+        <form method="get" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="margin: 0; color: #495057; font-size: 13px;">员工：</label>
+                <select name="employee" class="form-control" style="width: 150px; height: 34px;">
+                    <option value="">全部</option>
+                    {% for emp in emp_list %}
+                    <option value="{{ emp.id }}" {% if search_emp == emp.id|stringformat:"s" %}selected{% endif %}>
+                        {{ emp.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="margin: 0; color: #495057; font-size: 13px;">状态：</label>
+                <select name="status" class="form-control" style="width: 120px; height: 34px;">
+                    <option value="">全部</option>
+                    {% for k, v in status_choices.items %}
+                    <option value="{{ k }}" {% if search_status == k|stringformat:"s" %}selected{% endif %}>
+                        {{ v }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-modern btn-modern-primary" style="padding: 6px 16px;">
+                <span class="glyphicon glyphicon-search"></span> 查询
+            </button>
+            <a href="/attendance/list/" class="btn-modern btn-modern-default" style="padding: 6px 16px;">
+                重置
+            </a>
+        </form>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table-modern">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>员工</th>
+                <th>日期</th>
+                <th>上班时间</th>
+                <th>下班时间</th>
+                <th>考勤状态</th>
+                {% if not request.is_employee %}
+                <th>操作</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+            <tr>
+                <td>{{ obj.id }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #51CF66, #37B24D); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;">
+                            {{ obj.employee.name|first }}
+                        </div>
+                        <strong>{{ obj.employee.name }}</strong>
+                    </div>
+                </td>
+                <td>{{ obj.date|date:"Y-m-d" }}</td>
+                <td style="font-family: monospace;">{{ obj.clock_in|time:"H:i"|default:"--" }}</td>
+                <td style="font-family: monospace;">{{ obj.clock_out|time:"H:i"|default:"--" }}</td>
+                <td>
+                    {% if obj.status == 1 %}
+                    <span class="badge-modern badge-success">按时</span>
+                    {% elif obj.status == 2 %}
+                    <span class="badge-modern badge-warning">迟到</span>
+                    {% elif obj.status == 3 %}
+                    <span class="badge-modern badge-danger">早退</span>
+                    {% elif obj.status == 4 %}
+                    <span class="badge-modern badge-danger">缺勤</span>
+                    {% elif obj.status == 5 %}
+                    <span class="badge-modern badge-info">请假</span>
+                    {% endif %}
+                </td>
+                {% if not request.is_employee %}
+                <td>
+                    <a href="/attendance/{{ obj.id }}/edit/" class="btn btn-xs btn-default">
+                        <span class="glyphicon glyphicon-pencil"></span> 编辑
+                    </a>
+                    <a href="/attendance/{{ obj.id }}/delete/" class="btn btn-xs btn-danger" onclick="return confirm('确定要删除这条考勤记录吗？')">
+                        <span class="glyphicon glyphicon-trash"></span> 删除
+                    </a>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #ADB5BD; padding: 40px;">
+                    <span class="glyphicon glyphicon-inbox" style="font-size: 40px; display: block; margin-bottom: 10px;"></span>
+                    暂无考勤数据
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div style="padding: 15px 20px; border-top: 1px solid var(--border);">
+            {{ page_string|safe }}
+        </div>
+    </div>
+</div>
+{% endblock %}

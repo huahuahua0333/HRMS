@@ -1,0 +1,159 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - HRMS{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+<style>
+/* 置顶开关样式 */
+.toggle-wrap {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+.toggle-wrap input[type="checkbox"] {
+    display: none;
+}
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+    background-color: #ced4da;
+    border-radius: 26px;
+    transition: 0.3s;
+    margin-right: 10px;
+}
+.toggle-slider:before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: white;
+    top: 2px;
+    left: 2px;
+    transition: 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.toggle-wrap input:checked + .toggle-slider {
+    background-color: #fa5252;
+}
+.toggle-wrap input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+.toggle-text {
+    font-size: 14px;
+    color: #868e96;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <div class="card-header">
+        <h3>
+            <span class="glyphicon glyphicon-edit"></span>
+            {{ title }}
+        </h3>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate class="form-modern" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+
+                {# 置顶开关：特殊样式 #}
+                {% if field.name == "is_top" %}
+                <label class="toggle-wrap">
+                    {{ field }}
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">开启后公告将置顶显示在最前面</span>
+                </label>
+
+                {# 其他字段：正常渲染 #}
+                {% else %}
+                {{ field }}
+                {# 公告正文：提供 AI 生成按钮（仅公告表单 ai_enabled 时显示） #}
+                {% if ai_enabled and field.name == "content" %}
+                <div style="margin-top: 8px;">
+                    <button type="button" id="aiGenBtn" class="btn-modern btn-modern-default btn-sm">
+                        <span class="glyphicon glyphicon-flash"></span> AI 生成正文
+                    </button>
+                    <span id="aiMsg" style="font-size: 13px; margin-left: 10px;"></span>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if field.errors %}
+                <div style="color: #FA5252; font-size: 13px; margin-top: 5px;">
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
+                    {{ field.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button type="submit" class="btn-modern btn-modern-primary">
+                    <span class="glyphicon glyphicon-ok"></span> 提交
+                </button>
+                <a href="javascript:history.back()" class="btn-modern btn-modern-default">
+                    <span class="glyphicon glyphicon-arrow-left"></span> 返回
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+<script src="{% static 'plugins/bootstrap-datepicker/js/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+<script>
+    $(function () {
+        // 初始化日期选择器
+        $('#dt').datepicker({
+            format: 'yyyy-mm-dd',
+            language: 'zh-CN',
+            autoclose: true
+        });
+
+        // AI 生成公告正文（AJAX 回填到正文文本框，不刷新页面）
+        $('#aiGenBtn').on('click', function () {
+            var title = $('input[name=title]').val();
+            var $btn = $(this);
+            var $msg = $('#aiMsg');
+            $btn.prop('disabled', true);
+            $msg.css('color', '#868E96').text('AI 生成中...');
+            $.ajax({
+                url: '/notice/ai_generate/',
+                type: 'POST',
+                data: {
+                    title: title,
+                    points: '',
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    $btn.prop('disabled', false);
+                    if (res.status) {
+                        $('textarea[name=content]').val(res.content);
+                        $msg.css('color', '#37B24D').text('已生成，可继续编辑');
+                    } else {
+                        $msg.css('color', '#FA5252').text(res.msg);
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false);
+                    $msg.css('color', '#FA5252').text('请求失败，请稍后重试');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

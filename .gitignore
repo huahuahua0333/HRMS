@@ -1,0 +1,36 @@
+# ===== Python 字节码与虚拟环境 =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+
+# ===== 运行期产物（不上传版本库）=====
+logs/
+*.log
+
+# 上传的媒体文件默认忽略，仅保留默认头像
+media/*
+!media/avatar/
+media/avatar/*
+!media/avatar/default.png
+
+# ===== 本地数据库 =====
+*.sqlite3
+db.sqlite3
+
+# ===== 环境变量 / 密钥 =====
+.env
+*.env
+secrets.py
+local_secrets.py
+
+# ===== 操作系统文件 =====
+.DS_Store
+Thumbs.db

@@ -1,0 +1,92 @@
+{% extends 'layout.html' %}
+
+{% block title %}公告管理 - HRMS{% endblock %}
+{% block page_title %}公告管理{% endblock %}
+
+{% block content %}
+<!-- 筛选 -->
+<div class="card">
+    <div class="card-body">
+        <form class="form-inline" method="get" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" name="title" class="form-control" placeholder="搜索公告标题" value="{{ search_title }}" style="width: 250px;">
+            <button type="submit" class="btn-modern btn-modern-default">
+                <span class="glyphicon glyphicon-search"></span> 搜索
+            </button>
+            {% if not request.is_employee %}
+            <a href="/notice/add/" class="btn-modern btn-modern-primary">
+                <span class="glyphicon glyphicon-bullhorn"></span> 发布公告
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- 公告列表 -->
+<div class="card">
+    <div class="card-header">
+        <h3>
+            <span class="glyphicon glyphicon-list-alt"></span>
+            公告列表
+        </h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table-modern">
+            <thead>
+            <tr>
+                <th style="width: 60px;">ID</th>
+                <th>标题</th>
+                <th>发布人</th>
+                <th>发布时间</th>
+                <th style="width: 80px;">状态</th>
+                {% if not request.is_employee %}
+                <th style="width: 100px;">操作</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+            <tr>
+                <td>{{ obj.id }}</td>
+                <td>
+                    {% if obj.is_top %}
+                    <span class="badge-modern badge-danger" style="margin-right: 8px;">置顶</span>
+                    {% endif %}
+                    <strong>{{ obj.title }}</strong>
+                </td>
+                <td>{{ obj.publisher.username }}</td>
+                <td style="color: #868E96;">{{ obj.publish_time|date:"Y-m-d H:i" }}</td>
+                <td>
+                    {% if obj.is_top %}
+                    <span class="glyphicon glyphicon-arrow-up" style="color: #FA5252;"></span>
+                    {% else %}
+                    <span class="glyphicon glyphicon-file" style="color: #ADB5BD;"></span>
+                    {% endif %}
+                </td>
+                {% if not request.is_employee %}
+                <td>
+                    <a href="/notice/{{ obj.id }}/toggle_top/" class="btn btn-xs {% if obj.is_top %}btn-default{% else %}btn-warning{% endif %}">
+                        {% if obj.is_top %}
+                        <span class="glyphicon glyphicon-pushpin"></span> 取消置顶
+                        {% else %}
+                        <span class="glyphicon glyphicon-pushpin"></span> 置顶
+                        {% endif %}
+                    </a>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #ADB5BD; padding: 40px;">
+                    <span class="glyphicon glyphicon-inbox" style="font-size: 40px; display: block; margin-bottom: 10px;"></span>
+                    暂无公告数据
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div style="padding: 15px 20px; border-top: 1px solid var(--border);">
+            {{ page_string|safe }}
+        </div>
+    </div>
+</div>
+{% endblock %}

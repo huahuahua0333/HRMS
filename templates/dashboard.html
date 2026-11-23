@@ -1,0 +1,190 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}数据统计 - HRMS{% endblock %}
+{% block page_title %}数据统计仪表盘{% endblock %}
+
+{% block content %}
+<!-- 顶部统计卡片 -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <span class="glyphicon glyphicon-user"></span>
+        </div>
+        <div class="stat-info">
+            <h4 id="totalEmp">-</h4>
+            <p>员工总数</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <span class="glyphicon glyphicon-briefcase"></span>
+        </div>
+        <div class="stat-info">
+            <h4 id="totalDept">-</h4>
+            <p>部门数量</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <span class="glyphicon glyphicon-yen"></span>
+        </div>
+        <div class="stat-info">
+            <h4 id="totalSalary">-</h4>
+            <p>月度薪资总额</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon red">
+            <span class="glyphicon glyphicon-check"></span>
+        </div>
+        <div class="stat-info">
+            <h4 id="totalAtt">-</h4>
+            <p>考勤记录数</p>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row" style="display: flex; gap: 20px; margin-bottom: 20px;">
+    <!-- 部门人数分布饼图 -->
+    <div class="card" style="flex: 1;">
+        <div class="card-header">
+            <h3>
+                <span class="glyphicon glyphicon-pie-chart"></span>
+                部门人数分布
+            </h3>
+        </div>
+        <div class="card-body">
+            <div id="deptPieChart" style="height: 350px;"></div>
+        </div>
+    </div>
+
+    <!-- 考勤状态分布饼图 -->
+    <div class="card" style="flex: 1;">
+        <div class="card-header">
+            <h3>
+                <span class="glyphicon glyphicon-check"></span>
+                考勤状态分布
+            </h3>
+        </div>
+        <div class="card-body">
+            <div id="attPieChart" style="height: 350px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 薪资趋势折线图 -->
+<div class="card">
+    <div class="card-header">
+        <h3>
+            <span class="glyphicon glyphicon-signal"></span>
+            各月薪资趋势
+        </h3>
+    </div>
+    <div class="card-body">
+        <div id="salaryTrendChart" style="height: 350px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'plugins/echarts/echarts.min.js' %}"></script>
+<script>
+$(function() {
+    // ---- 1. 顶部统计数字 ----
+    function loadStats() {
+        $.get('/dashboard/overview/', function(res) {
+            if (res.status) {
+                $('#totalEmp').text(res.emp_count);
+                $('#totalDept').text(res.dept_count);
+                $('#totalSalary').text('¥' + res.salary_total.toFixed(0));
+                $('#totalAtt').text(res.att_count);
+            }
+        });
+    }
+
+    // ---- 2. 部门人数分布饼图 ----
+    function loadDeptPie() {
+        var chart = echarts.init(document.getElementById('deptPieChart'));
+        $.get('/dashboard/department_data/', function(res) {
+            if (res.status) {
+                chart.setOption({
+                    tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
+                    legend: { orient: 'vertical', left: 10, top: 'center' },
+                    color: ['#4F6EF7', '#51CF66', '#FF922B', '#FF6B6B', '#339AF0', '#845EF7'],
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['60%', '50%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                        label: { show: true, formatter: '{b}\n{c}人' },
+                        data: res.data
+                    }]
+                });
+            }
+        });
+    }
+
+    // ---- 3. 考勤状态分布饼图 ----
+    function loadAttPie() {
+        var chart = echarts.init(document.getElementById('attPieChart'));
+        $.get('/dashboard/attendance_stats/', function(res) {
+            if (res.status) {
+                chart.setOption({
+                    tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
+                    legend: { orient: 'vertical', left: 10, top: 'center' },
+                    color: ['#51CF66', '#FF922B', '#FF6B6B', '#ADB5BD'],
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['60%', '50%'],
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                        label: { show: true, formatter: '{b}\n{c}次' },
+                        data: res.data
+                    }]
+                });
+            }
+        });
+    }
+
+    // ---- 4. 薪资趋势折线图 ----
+    function loadSalaryTrend() {
+        var chart = echarts.init(document.getElementById('salaryTrendChart'));
+        $.get('/dashboard/salary_trend/', function(res) {
+            if (res.status) {
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                    xAxis: { type: 'category', data: res.months, boundaryGap: false },
+                    yAxis: { type: 'value', name: '薪资总额(元)' },
+                    series: [{
+                        name: '薪资总额',
+                        type: 'line',
+                        data: res.totals,
+                        smooth: true,
+                        areaStyle: { opacity: 0.3 },
+                        lineStyle: { width: 3, color: '#4F6EF7' },
+                        itemStyle: { color: '#4F6EF7' }
+                    }]
+                });
+            }
+        });
+    }
+
+    // 初始化所有图表
+    loadStats();
+    loadDeptPie();
+    loadAttPie();
+    loadSalaryTrend();
+
+    // 窗口resize时重绘
+    window.addEventListener('resize', function() {
+        echarts.init(document.getElementById('deptPieChart')).resize();
+        echarts.init(document.getElementById('attPieChart')).resize();
+        echarts.init(document.getElementById('salaryTrendChart')).resize();
+    });
+});
+</script>
+{% endblock %}

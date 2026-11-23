@@ -1,0 +1,65 @@
+{% extends 'layout.html' %}
+
+{% block title %}管理员管理 - HRMS{% endblock %}
+{% block page_title %}管理员管理{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>
+            <span class="glyphicon glyphicon-cog"></span>
+            管理员列表
+        </h3>
+        <a href="/admin/add/" class="btn-modern btn-modern-success">
+            <span class="glyphicon glyphicon-plus"></span> 新建管理员
+        </a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table-modern">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>用户名</th>
+                <th>密码</th>
+                <th style="width: 250px;">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+            <tr>
+                <td>{{ obj.id }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #845EF7, #7048E8); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">
+                            {{ obj.username|first|upper }}
+                        </div>
+                        <strong>{{ obj.username }}</strong>
+                    </div>
+                </td>
+                <td><span class="badge-modern badge-info">******</span></td>
+                <td>
+                    <a class="btn-modern btn-modern-default btn-sm" href="/admin/{{ obj.id }}/reset/pwd/">
+                        <span class="glyphicon glyphicon-refresh"></span> 重置密码
+                    </a>
+                    <a class="btn-modern btn-modern-primary btn-sm" href="/admin/{{ obj.id }}/edit/">
+                        <span class="glyphicon glyphicon-pencil"></span> 编辑
+                    </a>
+                    <a class="btn-modern btn-modern-danger btn-sm" href="/admin/{{ obj.id }}/delete/"
+                       onclick="return confirm('确定删除该管理员？')">
+                        <span class="glyphicon glyphicon-trash"></span> 删除
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #ADB5BD; padding: 40px;">
+                    <span class="glyphicon glyphicon-inbox" style="font-size: 40px; display: block; margin-bottom: 10px;"></span>
+                    暂无管理员数据
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

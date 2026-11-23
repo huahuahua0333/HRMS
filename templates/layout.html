@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}企业员工管理系统{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+    /* 全局悬浮 AI 助手 */
+    .ai-float-btn {
+        position: fixed; right: 28px; bottom: 28px; width: 56px; height: 56px;
+        border-radius: 50%; background: #339AF0; color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; cursor: pointer; z-index: 1050;
+        box-shadow: 0 4px 14px rgba(51, 154, 240, 0.4);
+    }
+    .ai-float-panel {
+        position: fixed; right: 28px; bottom: 96px; width: 360px; height: 480px;
+        background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+        display: none; flex-direction: column; z-index: 1050; overflow: hidden;
+    }
+    .ai-float-panel.open { display: flex; }
+    .ai-float-header {
+        background: #339AF0; color: #fff; padding: 12px 16px;
+        display: flex; justify-content: space-between; align-items: center; font-weight: 600;
+    }
+    .ai-float-header a { color: #fff; margin-right: 10px; font-weight: 400; }
+    .ai-float-header .close-btn { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; }
+    .ai-float-body { flex: 1; overflow-y: auto; padding: 14px; background: #F8F9FA; }
+    .ai-float-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #E9ECEF; }
+    .ai-float-input textarea { flex: 1; resize: none; }
+    .ai-float-msg { margin-bottom: 12px; display: flex; }
+    .ai-float-msg.user { justify-content: flex-end; }
+    .ai-float-bubble {
+        max-width: 78%; padding: 9px 12px; border-radius: 10px;
+        font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+    }
+    .ai-float-msg.user .ai-float-bubble { background: #339AF0; color: #fff; }
+    .ai-float-msg.ai .ai-float-bubble { background: #fff; color: #343A40; border: 1px solid #E9ECEF; }
+    </style>
+    {% block css %}{% endblock %}
+</head>
+<body>
+<div class="app-wrapper">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>
+                <span class="glyphicon glyphicon-th-large"></span>
+                HRMS
+            </h3>
+            <p>企业员工管理系统</p>
+        </div>
+        <ul class="sidebar-menu">
+            {% if request.is_super_admin or request.is_dept_admin %}
+            <li><a href="/dashboard/"><span class="glyphicon glyphicon-dashboard"></span><span>数据统计</span></a></li>
+            <li><a href="/roles_demo/"><span class="glyphicon glyphicon-eye-open"></span><span>权限演示</span></a></li>
+            <li><a href="/ai/assistant/"><span class="glyphicon glyphicon-flash"></span><span>AI 助手</span></a></li>
+            {% endif %}
+
+            {% if request.is_super_admin %}
+            <li><a href="/depart/list/"><span class="glyphicon glyphicon-briefcase"></span><span>部门管理</span></a></li>
+            {% endif %}
+
+            {% if request.is_super_admin or request.is_dept_admin %}
+            <li><a href="/user/list/"><span class="glyphicon glyphicon-user"></span><span>员工管理</span></a></li>
+            {% endif %}
+
+            {% if request.is_employee %}
+            <li><a href="/user/list/"><span class="glyphicon glyphicon-user"></span><span>我的档案</span></a></li>
+            {% endif %}
+
+            {% if request.is_super_admin or request.is_dept_admin or request.is_employee %}
+            <li><a href="/attendance/list/"><span class="glyphicon glyphicon-check"></span><span>考勤管理</span></a></li>
+            {% endif %}
+
+            {% if request.is_super_admin or request.is_dept_admin or request.is_employee %}
+            <li><a href="/salary/list/"><span class="glyphicon glyphicon-yen"></span><span>薪资管理</span></a></li>
+            {% endif %}
+
+            <li><a href="/notice/list/"><span class="glyphicon glyphicon-bullhorn"></span><span>公告中心</span></a></li>
+
+            {% if request.is_super_admin or request.is_dept_admin or request.is_employee %}
+            <li><a href="/task/list/"><span class="glyphicon glyphicon-tasks"></span><span>任务管理</span></a></li>
+            {% endif %}
+
+            {% if request.is_super_admin %}
+            <li><a href="/admin/list/"><span class="glyphicon glyphicon-cog"></span><span>管理员</span></a></li>
+            {% endif %}
+        </ul>
+
+        <!-- 用户角色标签 -->
+        <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
+            <div style="padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 12px; color: rgba(255,255,255,0.7);">
+                <div style="margin-bottom: 5px;">
+                    <span class="glyphicon glyphicon-user"></span>
+                    {{ request.admin_object.name }}
+                </div>
+                {% if request.is_super_admin %}
+                <span class="badge-modern badge-danger" style="background: rgba(255,107,107,0.3); color: #fff;">超级管理员</span>
+                {% elif request.is_dept_admin %}
+                <span class="badge-modern badge-warning" style="background: rgba(255,146,43,0.3); color: #fff;">部门管理员</span>
+                {% else %}
+                <span class="badge-modern badge-info" style="background: rgba(51,154,240,0.3); color: #fff;">普通员工</span>
+                {% endif %}
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 顶部栏 -->
+        <header class="topbar">
+            <h1 class="topbar-title">{% block page_title %}管理首页{% endblock %}</h1>
+            <div class="user-info">
+                <div class="user-avatar">{{ request.admin_object.name|first|upper }}</div>
+                <span>{{ request.admin_object.name }}</span>
+                <a href="/logout/" class="btn-modern btn-modern-default btn-sm">
+                    <span class="glyphicon glyphicon-log-out"></span> 退出
+                </a>
+            </div>
+        </header>
+
+        <!-- 内容区域 -->
+        <main class="content-area">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- 全局悬浮 AI 助手小窗 -->
+    <div id="aiFloatBtn" class="ai-float-btn" title="AI 助手">
+        <span class="glyphicon glyphicon-flash"></span>
+    </div>
+    <div id="aiFloatPanel" class="ai-float-panel">
+        <div class="ai-float-header">
+            <span>AI 智能助手</span>
+            <span>
+                <a href="/ai/assistant/">独立页面</a>
+                <button type="button" id="aiFloatClose" class="close-btn">&times;</button>
+            </span>
+        </div>
+        <div class="ai-float-body" id="aiFloatBox">
+            <div class="ai-float-msg ai">
+                <div class="ai-float-bubble">您好，有什么可以帮您？</div>
+            </div>
+        </div>
+        <div class="ai-float-input">
+            <textarea id="aiFloatInput" rows="1" placeholder="输入问题，Enter 发送"></textarea>
+            <button type="button" id="aiFloatSend" class="btn-modern btn-modern-primary btn-sm">发送</button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.min.js' %}"></script>
+<script>
+$(function () {
+    // 从 Cookie 读取 CSRF Token（悬浮窗页面没有 {% csrf_token %} 表单）
+    function getCookie(name) {
+        var arr = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)(;|$)'));
+        return arr ? decodeURIComponent(arr[2]) : '';
+    }
+    var csrf = getCookie('csrftoken');
+    var $panel = $('#aiFloatPanel');
+    var $box = $('#aiFloatBox');
+    var $input = $('#aiFloatInput');
+
+    $('#aiFloatBtn').on('click', function () { $panel.addClass('open'); });
+    $('#aiFloatClose').on('click', function () { $panel.removeClass('open'); });
+
+    function addFloatMsg(role, text) {
+        var $msg = $('<div class="ai-float-msg ' + role + '"></div>');
+        $msg.append($('<div class="ai-float-bubble"></div>').text(text));
+        $box.append($msg);
+        $box.scrollTop($box[0].scrollHeight);
+    }
+
+    function floatSend() {
+        var question = $input.val().trim();
+        if (!question) { return; }
+        addFloatMsg('user', question);
+        $input.val('');
+        var $loading = $('<div class="ai-float-msg ai"></div>');
+        $loading.append($('<div class="ai-float-bubble" style="color:#868E96">思考中...</div>'));
+        $box.append($loading);
+        $box.scrollTop($box[0].scrollHeight);
+
+        $.ajax({
+            url: '/ai/assistant/chat/',
+            type: 'POST',
+            data: { mode: 'chat', question: question, csrfmiddlewaretoken: csrf },
+            dataType: 'JSON',
+            success: function (res) {
+                $loading.remove();
+                addFloatMsg('ai', res.status ? res.answer : res.msg);
+            },
+            error: function () {
+                $loading.remove();
+                addFloatMsg('ai', '请求失败，请稍后重试');
+            }
+        });
+    }
+
+    $('#aiFloatSend').on('click', floatSend);
+    $input.on('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); floatSend(); }
+    });
+});
+</script>
+{% block js %}{% endblock %}
+</body>
+</html>
